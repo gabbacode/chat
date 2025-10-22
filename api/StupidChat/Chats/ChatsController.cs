@@ -1,48 +1,83 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
+/*
 [ApiController]
 [Route("api/[controller]")]
-public class ChatsController : ControllerBase
+public class ChatsController(IChatRepository repository) : ControllerBase
 {
-    private readonly IChatRepository _repository;
-
-    public ChatsController(IChatRepository repository)
-    {
-        _repository = repository;
-    }
-
     [HttpGet("{id}")]
-    public async Task<ActionResult<Chat>> Get(int id)
+    public async Task<Chat> Get(int id)
     {
-        return await _repository.GetByIdAsync(id);
+        return await repository.GetByIdAsync(id);
     }
 
     [HttpPost("create")]
-    public async Task<ActionResult<int>> Create([FromBody] Chat chat)
+    public Task<Chat> Create([FromBody] CreateChatRequest createChatRequest)
     {
-        var id = await _repository.AddAsync(chat);
-        
-        return id;
+        return repository.Create(createChatRequest.User);
     }
-    
-    [HttpPost("{id}/ask")]
-    public async Task<ActionResult<Answer>> AskQuestion(int id, [FromBody] Question question)
-    {
-        var chat = await _repository.GetByIdAsync(id);
-        
-        if (chat == null)
-        {
-            return NotFound("Chat not found");
-        }
-        
-        chat.Conversation[question.Value] = "I don't know";
-        
-        await _repository.Update(id, chat);
 
-        return new Answer
+    [HttpPost("import")]
+    public Task<Chat> Import([FromBody] Chat chat)
+    {
+        return repository.AddAsync(chat);
+    }
+
+    [HttpPost("{id}/ask")]
+    public async Task<AskQuestionResponse> AskQuestion(long id, [FromBody] AskQuestionRequest question)
+    {
+        var newMessage = await repository.AddQuestionAsync(
+            id, 
+            new Message
+            {
+                Author = question.Author,
+                Text = question.Text
+            });
+
+        //if (chat == null)
+        //{
+        //    return NotFound("Chat not found");
+        //}
+
+        return new AskQuestionResponse
         {
-            Value = chat.Conversation[question.Value]
+            ChatId = id,
+            Message = newMessage
+        };
+    }
+
+    [HttpPost("{id}/answer")]
+    public async Task<AnswerQuestionResponse> AnswerQuestion(long id, [FromBody] AnswerQuestionRequest answerQuestionRequest)
+    {
+        var answer = await repository.AddAnswerAsync(
+            id,
+            answerQuestionRequest.QuestionId,
+            new ReplyMessage
+            {
+                Author = answerQuestionRequest.Author,
+                Text = answerQuestionRequest.Text
+            });
+
+        return new AnswerQuestionResponse
+        {
+            ChatId = id,
+            QuestionId = answerQuestionRequest.QuestionId,
+            Answer = answer
+        };
+    }
+
+    [HttpGet("{id}/answer/{questionId}")]
+    public async Task<LoadAnswersResponse> LoadAnswers(long id, long questionId)
+    {
+        var answers = await repository.GetAnswerAsync(id, questionId);
+
+        return new LoadAnswersResponse
+        {
+            ChatId = id,
+            QuestionId = questionId,
+            Answers = answers
         };
     }
 }
+*/

@@ -1,9 +1,12 @@
-using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 
 public interface IChatRepository
 {
-    Task<Chat> GetByIdAsync(int id);
-    Task<int> AddAsync(Chat chat);
-    Task Update(int id, Chat chat);
+    Task<Chat> GetByIdAsync(long chatId);
+    Task<Chat> Create(string user);
+    Task<Chat> AddAsync(Chat chat);
+    Task<Message> AddQuestionAsync(long chatId, Message question);
+    Task<ReplyMessage> AddAnswerAsync(long chatId, long questionId, ReplyMessage answer);
+    Task<ReplyMessage[]> GetAnswerAsync(long chatId, long messageId);
 }
