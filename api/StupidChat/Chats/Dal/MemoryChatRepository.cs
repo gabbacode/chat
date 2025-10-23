@@ -8,10 +8,13 @@ public class MemoryChatRepository : IChatRepository
     private readonly ConcurrentDictionary<long, Chat> chats = new();
     private readonly object[] lockStripes = new object[1024];
 
+    // считаем что активность в чате не 
+    private readonly ReaderWriterLockSlim[] lockStripes = new ReaderWriterLockSlim[1024];
+
     public MemoryChatRepository()
     {
         for (int i = 0; i < lockStripes.Length; i++)
-            lockStripes[i] = new object();
+            lockStripes[i] = new ReaderWriterLockSlim();
     }
 
     private long chatId = 0;
@@ -48,12 +51,18 @@ public class MemoryChatRepository : IChatRepository
     {
         chats.TryGetValue(chatId, out var chat);
 
-        lock (GetLock(chatId))
+        var locker = GetLock(chatId);
+        locker.EnterWriteLock();
+        try
         {
             question.Id = messageId++;
             question.Timestamp = DateTime.UtcNow;
 
             chat.Messages.Add(question.Id, question);
+        }
+        finally 
+        { 
+            locker.ExitWriteLock();
         }
 
         return Task.FromResult(question);
@@ -63,29 +72,41 @@ public class MemoryChatRepository : IChatRepository
     {
         chats.TryGetValue(chatId, out var chat);
 
-        lock (GetLock(chatId))
+        var locker = GetLock(chatId);
+        locker.EnterReadLock();
+        try
         {
             var message = chat.Messages[messageId];
             return Task.FromResult(
                 message.Replies.ToArray());   
         }
+        finally
+        {
+            locker.ExitReadLock();
+    }
     }
 
     public Task<ReplyMessage> AddAnswerAsync(long chatId, long questionId, ReplyMessage answer)
     {
         chats.TryGetValue(chatId, out var chat);
 
-        lock (GetLock(chatId))
+        var locker = GetLock(chatId);
+        locker.EnterWriteLock();
+        try
         {
             answer.Id = messageId++;
             answer.Timestamp = DateTime.UtcNow;
             chat.Messages[questionId].Replies.Add(answer);
         }
+        finally 
+        {
+            locker.ExitWriteLock();
+        }
 
         return Task.FromResult(answer);
     }
 
-    private object GetLock(long chatId)
+    private ReaderWriterLockSlim GetLock(long chatId)
     {
         int stripe = Math.Abs(chatId.GetHashCode()) % lockStripes.Length;
         return lockStripes[stripe];
