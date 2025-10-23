@@ -95,3 +95,16 @@ api
 логи
 оптимизации репозитория, буферизация изменений (другой порядок по времени)
 добавлять сжатие
+
+
+ https://localhost:7076/api/chats/create --method=POST -H "Content-Type: application/json" -f create.json
+Bombarding https://localhost:7076/api/chats/create for 10s using 125 connection(s)
+[=================================================================================================================] 10s
+Done!
+Statistics        Avg      Stdev        Max
+  Reqs/sec     93 132.04   17 229.66  127 843.77
+  Latency        1.34ms   748.22us    82.14ms
+  HTTP codes:
+    1xx - 0, 2xx - 933401, 3xx - 0, 4xx - 0, 5xx - 0
+    others - 0
+  Throughput:    36.93MB/s
