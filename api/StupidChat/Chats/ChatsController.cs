@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
+// жертвуем удобством, для того чотбы сократить время на треть, так как эффективность это цель из задания
+
 /*
 [ApiController]
 [Route("api/[controller]")]

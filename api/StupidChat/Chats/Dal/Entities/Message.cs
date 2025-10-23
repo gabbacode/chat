@@ -11,5 +11,6 @@ public record struct Message()
 
     public string Text { get; set; }
 
+    // плоский список ответов, при наличии сообщение превращается в тред
     public List<ReplyMessage> Replies { get; private set; } = new List<ReplyMessage>(0);
 }

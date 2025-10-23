@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 public class MemoryChatRepository : IChatRepository
 {
+    // заменен список на потокобезопасный словарь с быстрым поисокм по ключу
     private readonly ConcurrentDictionary<long, Chat> chats = new();
-    private readonly object[] lockStripes = new object[1024];
 
-    // считаем что активность в чате не 
+    // считаем что активность в чате невысокая и нет нужны хранить блокировку для каждого чата
     private readonly ReaderWriterLockSlim[] lockStripes = new ReaderWriterLockSlim[1024];
 
     public MemoryChatRepository()
@@ -17,7 +17,10 @@ public class MemoryChatRepository : IChatRepository
             lockStripes[i] = new ReaderWriterLockSlim();
     }
 
+    // PK для чатов
     private long chatId = 0;
+
+    // PK для сообщений, сквозной по всем чатам, вдруг цитирование, пересылка и переходы понадобится
     private long messageId = 0;
 
     public Task<Chat> GetByIdAsync(long chatId)
@@ -78,12 +81,12 @@ public class MemoryChatRepository : IChatRepository
         {
             var message = chat.Messages[messageId];
             return Task.FromResult(
-                message.Replies.ToArray());   
+                message.Replies.ToArray());
         }
         finally
         {
             locker.ExitReadLock();
-    }
+        }
     }
 
     public Task<ReplyMessage> AddAnswerAsync(long chatId, long questionId, ReplyMessage answer)

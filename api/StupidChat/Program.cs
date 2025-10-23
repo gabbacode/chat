@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+// повышаем эффективность сериализации
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolver = AppJsonContext.Default;
@@ -26,7 +27,10 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         });
 });
-//builder.Logging.ClearProviders();
+
+// убираем логи экономим 5-10%
+builder.Logging.ClearProviders();
+
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.AllowSynchronousIO = true;
@@ -36,6 +40,8 @@ var app = builder.Build();
 
 app.UseOpenApi().UseSwaggerUi();
 app.UseHttpsRedirection();
+
+// экономия 30%
 //app.MapControllers();
 
 app
